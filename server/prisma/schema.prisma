@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GameName {
+  BLACKJACK
+  CRASH
+}
+
+enum GameState {
+  FINISHED
+  PROGRESS
+}
+
+enum Suits {
+  DIAMOND
+  CLUB
+  SPADE
+  HEART
+}
+
+enum CardValues {
+  TWO
+  THREE
+  FOUR
+  FIVE
+  SIX
+  SEVEN
+  EIGHT
+  NINE
+  TEN
+  ACE
+  JACK
+  QUEEN
+  KING
+}
+
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  username String?
+  name     String?
+  password String
+  wallet   Wallet?
+  hand     Hand[]
+  bet      Bet[]
+  game     Game[]
+}
+
+model Wallet {
+  id        String @id @default(uuid())
+  osrs      Float
+  rs3       Float
+  player    User   @relation(fields: [id_player], references: [id])
+  id_player String @unique
+}
+
+model Game {
+  id          String    @id @default(uuid())
+  name        GameName
+  date        DateTime  @default(now())
+  state       GameState
+  hand        Hand?     @relation(fields: [id_hand], references: [id])
+  id_hand     String    @unique
+  bet         Bet?      @relation(fields: [id_bet], references: [id])
+  id_bet      Int?      @unique
+  User        User?     @relation(fields: [id_user], references: [id])
+  id_user     String?
+  history     History[]
+  dealedCards Int?
+}
+
+model Hand {
+  id        String       @id @default(uuid())
+  player    User         @relation(fields: [id_player], references: [id])
+  id_player String
+  game      Game?
+  cards     CardOnHand[]
+}
+
+model Card {
+  id    Int          @id @default(autoincrement())
+  suit  Suits
+  name  CardValues
+  value Int
+  hands CardOnHand[]
+}
+
+model CardOnHand {
+  card    Card   @relation(fields: [id_card], references: [id])
+  id_card Int
+  hand    Hand   @relation(fields: [id_hand], references: [id])
+  id_hand String
+
+  @@id([id_card, id_hand])
+}
+
+model Bet {
+  id        Int      @id @default(autoincrement())
+  player    User     @relation(fields: [id_player], references: [id])
+  id_player String
+  game      Game?
+  amount    Float
+  date      DateTime @default(now())
+}
+
+model History {
+  id      Int      @id @default(autoincrement())
+  game    Game     @relation(fields: [id_game], references: [id])
+  id_game String
+  event   String
+  date    DateTime @default(now())
+}
